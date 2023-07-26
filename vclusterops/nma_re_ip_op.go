@@ -120,7 +120,7 @@ func (op *NMAReIPOp) Prepare(execContext *OpEngineExecContext) error {
 
 
 	// build request body for hosts
-	err = op.updateRequestBody(op.hosts, execContext)
+        err := op.updateRequestBody(op.hosts, execContext)
 	if err != nil {
 		return err
 	}
