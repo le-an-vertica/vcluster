@@ -39,6 +39,7 @@ func makeNMAReIPOp(name string,
 	op.name = name
 	op.catalogPathMap = catalogPathMap
 	op.reIPList = reIPList
+        vlog.LogPrintInfo("Re-ip list: %+v", reIPList)
 
 	return op
 }
