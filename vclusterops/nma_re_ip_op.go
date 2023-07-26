@@ -93,16 +93,7 @@ func (op *NMAReIPOp) setupClusterHTTPRequest(hosts []string) {
 
 func (op *NMAReIPOp) Prepare(execContext *OpEngineExecContext) error {
 	// calculate quorum and update the hosts
-	hostNodeMap := execContext.nmaVDatabase.HostNodeMap
-	for _, host := range execContext.hostsWithLatestCatalog {
-		vnode, ok := hostNodeMap[host]
-		if !ok {
-			return fmt.Errorf("[%s] cannot find %s from the catalog", op.name, host)
-		}
-		if vnode.IsPrimary {
-			op.hosts = append(op.hosts, host)
-		}
-	}
+        op.hosts = execContext.hostsWithLatestCatalog
 
 	// count the quorum
 	op.primaryNodeCount = 0
