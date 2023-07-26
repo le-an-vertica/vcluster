@@ -39,7 +39,6 @@ func makeNMAReIPOp(name string,
 	op.name = name
 	op.catalogPathMap = catalogPathMap
 	op.reIPList = reIPList
-        vlog.LogPrintInfo("Re-ip list: %+v", reIPList)
 
 	return op
 }
@@ -91,6 +90,26 @@ func (op *NMAReIPOp) setupClusterHTTPRequest(hosts []string) {
 	}
 }
 
+// updateReIPList is used for the vcluster CLI to update node names
+func (op *NMAReIPOp) updateReIPList(execContext *OpEngineExecContext) error {
+	hostNodeMap := execContext.nmaVDatabase.HostNodeMap
+
+	for i := 0; i < len(op.reIPList); i++ {
+		info := op.reIPList[i]
+		if info.NodeName == "" {
+			vnode, ok := hostNodeMap[info.NodeAddress]
+			if !ok {
+				return fmt.Errorf("the provided IP %s cannot be found from the database catalog",
+					info.NodeAddress)
+			}
+			info.NodeName = vnode.Name
+			op.reIPList[i] = info
+		}
+	}
+
+	return nil
+}
+
 func (op *NMAReIPOp) Prepare(execContext *OpEngineExecContext) error {
 	// calculate quorum and update the hosts
 	hostNodeMap := execContext.nmaVDatabase.HostNodeMap
@@ -104,24 +123,22 @@ func (op *NMAReIPOp) Prepare(execContext *OpEngineExecContext) error {
 		}
 	}
 
-	// count the quorum
-	op.primaryNodeCount = 0
-	for h := range hostNodeMap {
-		vnode := hostNodeMap[h]
-		if vnode.IsPrimary {
-			op.primaryNodeCount++
-		}
-	}
-	op.quorumCount = op.primaryNodeCount/2 + 1
+	// get the quorum count
+	op.quorumCount = execContext.nmaVDatabase.QuorumCount
 
 	// quorum check
 	if !op.hasQuorum(len(op.hosts)) {
 		return fmt.Errorf("failed quorum check, not enough primaries exist with: %d", len(op.hosts))
 	}
 
+	// update re-ip list
+	err := op.updateReIPList(execContext)
+	if err != nil {
+		return fmt.Errorf("[%s] error udating reIP list: %w", op.name, err)
+	}
 
 	// build request body for hosts
-        err := op.updateRequestBody(op.hosts, execContext)
+	err = op.updateRequestBody(op.hosts, execContext)
 	if err != nil {
 		return err
 	}
@@ -188,3 +205,4 @@ func (op *NMAReIPOp) hasQuorum(hostCount int) bool {
 
 	return true
 }
+
