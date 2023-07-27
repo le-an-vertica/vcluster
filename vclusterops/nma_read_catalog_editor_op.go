@@ -47,6 +47,7 @@ func MakeNMAReadCatalogEditorOp(
 			op.catalogPathMap[host] = mapHostToCatalogPath[host]
 		}
 	}
+        vlog.LogPrintInfo("Catalog path map: %+v", op.catalogPathMap)
 
 	return op, nil
 }
