@@ -30,18 +30,18 @@ type NMAReIPOp struct {
 	quorumCount        int // quorumCount = (1/2 * number of primary nodes) + 1
 	primaryNodeCount   int
 	hostRequestBodyMap map[string]string
-	forCLI             bool
+	mapHostToNodeName  map[string]string
 }
 
 func makeNMAReIPOp(name string,
 	catalogPathMap map[string]string,
 	reIPList []ReIPInfo,
-	forCLI bool) NMAReIPOp {
+	mapHostToNodeName map[string]string) NMAReIPOp {
 	op := NMAReIPOp{}
 	op.name = name
 	op.catalogPathMap = catalogPathMap
 	op.reIPList = reIPList
-	op.forCLI = forCLI
+	op.mapHostToNodeName = mapHostToNodeName
 
 	return op
 }
@@ -114,20 +114,24 @@ func (op *NMAReIPOp) updateReIPList(execContext *OpEngineExecContext) error {
 }
 
 func (op *NMAReIPOp) Prepare(execContext *OpEngineExecContext) error {
-	// calculate quorum and update the hosts
-	hostNodeMap := execContext.nmaVDatabase.HostNodeMap
-	if op.forCLI {
-		for _, host := range execContext.hostsWithLatestCatalog {
-			vnode, ok := hostNodeMap[host]
-			if !ok {
-				return fmt.Errorf("[%s] cannot find %s from the catalog", op.name, host)
-			}
-			if vnode.IsPrimary {
-				op.hosts = append(op.hosts, host)
-			}
+	// get the primary node names
+	// this step is needed as the new host addresses
+	// are not in the catalog
+	primaryNodes := make(map[string]struct{})
+	nodeList := execContext.nmaVDatabase.Nodes
+	for i := 0; i < len(nodeList); i++ {
+		vnode := nodeList[i]
+		if vnode.IsPrimary {
+			primaryNodes[vnode.Name] = struct{}{}
 		}
-	} else {
-		op.hosts = execContext.hostsWithLatestCatalog
+	}
+
+	// calculate quorum and update the hosts
+	for _, host := range execContext.hostsWithLatestCatalog {
+		nodeName := op.mapHostToNodeName[host]
+		if _, ok := primaryNodes[nodeName]; ok {
+			op.hosts = append(op.hosts, host)
+		}
 	}
 
 	// get the quorum count
@@ -139,15 +143,13 @@ func (op *NMAReIPOp) Prepare(execContext *OpEngineExecContext) error {
 	}
 
 	// update re-ip list
-	if op.forCLI {
-		err := op.updateReIPList(execContext)
-		if err != nil {
-			return fmt.Errorf("[%s] error udating reIP list: %w", op.name, err)
-		}
+	err := op.updateReIPList(execContext)
+	if err != nil {
+		return fmt.Errorf("[%s] error udating reIP list: %w", op.name, err)
 	}
 
 	// build request body for hosts
-	err := op.updateRequestBody(op.hosts, execContext)
+	err = op.updateRequestBody(op.hosts, execContext)
 	if err != nil {
 		return err
 	}
