@@ -128,8 +128,15 @@ func (op *NMAReIPOp) Prepare(execContext *OpEngineExecContext) error {
 		}
 	}
 
-	// get the quorum count
-	op.quorumCount = execContext.nmaVDatabase.QuorumCount
+	// count the quorum
+	op.primaryNodeCount = 0
+	for h := range hostNodeMap {
+		vnode := hostNodeMap[h]
+		if vnode.IsPrimary {
+			op.primaryNodeCount++
+		}
+	}
+	op.quorumCount = op.primaryNodeCount/2 + 1
 
 	// quorum check
 	if !op.hasQuorum(len(op.hosts)) {
