@@ -13,8 +13,8 @@ import (
 type VReIPOptions struct {
 	DatabaseOptions
 
-	ReIPList    []ReIPInfo
-	ForOperator bool // whether called by the K8s operator
+	ReIPList []ReIPInfo
+	ForCLI   bool // whether called by the CLI
 }
 
 func VReIPFactory() VReIPOptions {
@@ -155,7 +155,7 @@ func produceReIPInstructions(options *VReIPOptions) ([]ClusterOp, error) {
 	// re-ip
 	// at this stage the re-ip info should either by provided by
 	// the re-ip file (for vcluster CLI) or the Kubernetes operator
-	nmaReIPOP := makeNMAReIPOp("NMAReIPOp", mapHostToCatalogPath, options.ReIPList, options.ForOperator)
+	nmaReIPOP := makeNMAReIPOp("NMAReIPOp", mapHostToCatalogPath, options.ReIPList, options.ForCLI)
 
 	instructions = append(instructions,
 		&nmaHealthOp,
