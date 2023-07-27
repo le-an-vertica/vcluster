@@ -126,6 +126,8 @@ func (op *NMAReIPOp) Prepare(execContext *OpEngineExecContext) error {
 				op.hosts = append(op.hosts, host)
 			}
 		}
+	} else {
+		op.hosts = execContext.hostsWithLatestCatalog
 	}
 
 	// get the quorum count
