@@ -72,8 +72,8 @@ func (vcc VClusterCommands) VFetchNodeState(options *VFetchNodeStateOptions) ([]
 
 	// this vdb is used to fetch node version
 	var vdb VCoordinationDatabase
-        err = vcc.getVDBFromRunningDBIncludeSandbox(&vdb, &options.DatabaseOptions, util.MainClusterSandbox)
-        if err != nil {
+	err = vcc.getVDBFromRunningDBIncludeSandbox(&vdb, &options.DatabaseOptions, util.MainClusterSandbox)
+	if err != nil {
 		vcc.Log.PrintInfo("Error from vdb build: %s", err.Error())
 
 		rfcError := &rfc7807.VProblem{}
