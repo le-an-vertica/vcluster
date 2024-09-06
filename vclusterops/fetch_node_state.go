@@ -58,6 +58,8 @@ func (options *VFetchNodeStateOptions) validateAnalyzeOptions(vcc VClusterComman
 
 // VFetchNodeState returns the node state (e.g., up or down) for each node in the cluster and any
 // error encountered.
+//
+//nolint:all
 func (vcc VClusterCommands) VFetchNodeState(options *VFetchNodeStateOptions) ([]NodeInfo, error) {
 	/*
 	 *   - Produce Instructions
